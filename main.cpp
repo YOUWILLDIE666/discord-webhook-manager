@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
             webhookUrl = argv[i + 1];
             break;
         }
-        else if (std::string(argv[i]) == "--json-file" && (i + 1) < argc) {
+        else if (std::string(argv[i]) == "--json" && (i + 1) < argc) {
             std::string filepath = argv[i + 1];
             std::ifstream jsonFile(filepath);
             if (!jsonFile.is_open()) {
