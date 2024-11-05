@@ -1,12 +1,20 @@
 #include <iostream>
-#include <fstream>
+#include <sstream>
 #include <string>
 #include <cURLpp/cURLpp.hpp>
 #include <cURLpp/Easy.hpp>
 #include <cURLpp/Options.hpp>
 #include <nlohmann/json.hpp>
 
-void hell()
+const std::string RESET = "\x1B[0m";
+const std::string BOLD = "\x1B[1m";
+const std::string UNDERLINE = "\x1B[4m";
+const std::string CYAN = "\x1B[36m";
+const std::string YELLOW = "\x1B[33m";
+const std::string GREEN = "\x1B[32m";
+const std::string RED = "\x1B[31m";
+
+const static void hell()
 {
     std::cout << "Usage:\n"
               << "  webhook_sender [options]\n\n"
@@ -16,10 +24,57 @@ void hell()
               << "  --username <name>        Specify the username.\n"
               << "  --content <message>      Specify the message content.\n"
               << "  --avatarUrl <url>        Specify the avatar URL.\n"
+              << "  --dump <webhookUrl>      Dump information about the specified webhook.\n"
               << "  --help                   Display this help message.\n";
 }
 
-void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content, const std::string& avatarUrl)
+const static void dump(const std::string& webhookUrl)
+{
+    try
+    {
+        cURLpp::Easy request;
+        request.setOpt(new cURLpp::options::Url(webhookUrl));
+        request.setOpt(new cURLpp::options::CustomRequest("GET"));
+
+        std::ostringstream responseStream;
+        request.setOpt(new cURLpp::options::WriteStream(&responseStream));
+
+        request.perform();
+
+        nlohmann::json jsonResponse = nlohmann::json::parse(responseStream.str());
+
+        if (!jsonResponse["id"].is_null())
+        {
+            std::cout << BOLD << CYAN << "Webhook Information:" << RESET << "\n"
+                << BOLD << UNDERLINE << "==============================================" << RESET << "\n"
+                << BOLD << YELLOW << "Token:" << RESET << " " << jsonResponse["token"].get<std::string>() << "\n"
+                << BOLD << YELLOW << "Name:" << RESET << " " << jsonResponse["name"].get<std::string>() << "\n"
+                << BOLD << YELLOW << "Guild ID:" << RESET << " " << jsonResponse["guild_id"].get<std::string>() << "\n"
+                << BOLD << YELLOW << "Channel ID:" << RESET << " " << jsonResponse["channel_id"].get<std::string>() << "\n"
+                << BOLD << YELLOW << "Application ID:" << RESET << " " 
+                << (jsonResponse["application_id"].is_null() ? RED + "None" + RESET : jsonResponse["application_id"].get<std::string>()) << "\n"
+                << BOLD << YELLOW << "ID:" << RESET << " " << jsonResponse["id"].get<std::string>() << "\n"
+                << BOLD << YELLOW << "Avatar:" << RESET << " " 
+                << (jsonResponse["avatar"].is_null() ? RED + "None" + RESET : jsonResponse["avatar"].get<std::string>()) << "\n"
+                << BOLD << YELLOW << "Webhook URL:" << RESET << " " << jsonResponse["url"].get<std::string>() << "\n"
+                << BOLD << UNDERLINE << "==============================================" << RESET << "\n";
+        }
+        else
+        {
+            std::cout << RED << "Error: Webhook not found." << RESET;
+        }
+    }
+    catch (cURLpp::RuntimeError& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+const static void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content, const std::string& avatarUrl)
 {
     nlohmann::json jsonPayload;
     jsonPayload["username"] = username;
@@ -42,35 +97,36 @@ void sendWebhook(const std::string& webhookUrl, const std::string& username, con
         request.setOpt(new cURLpp::options::PostFieldSize(payloadString.size()));
 
         request.perform();
-        std::cout << "\x1B[32;1mSuccess!\x1B[0m" << std::endl;
+        std::cout << GREEN << ";1mSuccess!" << RESET << std::endl;
     }
     catch (cURLpp::RuntimeError& e)
     {
-        std::cerr << "cURL Error: " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
     catch (std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 }
 
-void deleteWebhook(const std::string& webhookUrl)
+const static void deleteWebhook(const std::string& webhookUrl)
 {
     try
     {
         cURLpp::Easy request;
         request.setOpt(new cURLpp::options::Url(webhookUrl));
         request.setOpt(new cURLpp::options::CustomRequest("DELETE"));
+
         request.perform();
-        std::cout << "Webhook \x1B[31;4mDEMOLISHED\x1B[0m >:3" << std::endl;
+        std::cout << "Webhook " << RED << "DEMOLISHED" << RESET << " successfully >:3" << std::endl;
     }
     catch (cURLpp::RuntimeError& e)
     {
-        std::cerr << "cURL Error: " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
     catch (std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 }
 
@@ -84,101 +140,61 @@ int main(int argc, char* argv[])
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole, dwMode);
 #endif
-    cURLpp::Cleanup cleanup;
+    cURLpp::Cleanup;
 
-    bool deleteWebhookFlag = false;
     std::string webhookUrl;
-    std::string username;
+    std::string username = "Webhook";
     std::string content;
     std::string avatarUrl;
+    bool dumpWebhookFlag = false;
+    bool deleteWebhookFlag = false;
 
-    for (int i=1; i < argc; ++i)
+    for (int i = 1; i < argc; ++i)
     {
-        if (std::string(argv[i]) == "--delete" && (i + 1) < argc)
-        {
-            deleteWebhookFlag = true;
-            webhookUrl = argv[i + 1];
-        }
-        else if (std::string(argv[i]) == "--json" && (i + 1) < argc)
-        {
-            std::string filepath = argv[i + 1];
-            std::ifstream jsonFile(filepath);
-            if (!jsonFile.is_open()) 
-            {
-                std::cerr << "Could not open the file: " << filepath << std::endl;
-                return 1;
-            }
-            try
-            {
-                nlohmann::json json;
-                jsonFile >> json;
-
-                webhookUrl = json.at("webhookUrl").get<std::string>();
-                username = json.at("username").get<std::string>();
-                content = json.at("content").get<std::string>();
-                avatarUrl = json.value("avatarUrl", "");
-            }
-            catch (nlohmann::json::exception& e)
-            {
-                std::cerr << "JSON Error: " << e.what() << std::endl;
-                return 1;
-            }
-        }
-        else if (std::string(argv[i]) == "--username" && (i + 1) < argc)
-        {
-            username = argv[i + 1];
-        }
-        else if (std::string(argv[i]) == "--content" && (i + 1) < argc)
-        {
-            content = argv[i + 1];
-        }
-        else if (std::string(argv[i]) == "--avatarUrl" && (i + 1) < argc) 
-        {
-            avatarUrl = argv[i + 1];
-        }
-        else if (std::string(argv[i]) == "--help")
+        if (std::string(argv[i]) == "--help")
         {
             hell();
             return 0;
+        }
+        else if (std::string(argv[i]) == "--dump" && (i + 1) < argc)
+        {
+            dumpWebhookFlag = true;
+            webhookUrl = argv[++i];
+        }
+        else if (std::string(argv[i]) == "--delete" && (i + 1) < argc)
+        {
+            deleteWebhookFlag = true;
+            webhookUrl = argv[++i];
+        }
+        else if (std::string(argv[i]) == "--username" && (i + 1) < argc)
+        {
+            username = argv[++i];
+        }
+        else if (std::string(argv[i]) == "--content" && (i + 1) < argc)
+        {
+            content = argv[++i];
+        }
+        else if (std::string(argv[i]) == "--avatarUrl" && (i + 1) < argc)
+        {
+            avatarUrl = argv[++i];
         }
     }
 
     if (deleteWebhookFlag)
     {
-        if (webhookUrl.empty())
-        {
-            std::cerr << "Webhook URL must be provided for deletion." << std::endl;
-            return 1;
-        }
         deleteWebhook(webhookUrl);
+    }
+    else if (dumpWebhookFlag)
+    {
+        dump(webhookUrl);
+    }
+    else if (!content.empty())
+    {
+        sendWebhook(webhookUrl, username, content, avatarUrl);
     }
     else
     {
-        if (webhookUrl.empty())
-        {
-            std::cout << "Enter webhook URL: ";
-            std::getline(std::cin, webhookUrl);
-        }
-
-        if (username.empty())
-        {
-            std::cout << "Enter username: ";
-            std::getline(std::cin, username);
-        }
-
-        if (content.empty())
-        {
-            std::cout << "Enter message: ";
-            std::getline(std::cin, content);
-        }
-
-        if (avatarUrl.empty())
-        {
-            std::cout << "Enter avatar URL (leave blank for default): ";
-            std::getline(std::cin, avatarUrl);
-        }
-
-        sendWebhook(webhookUrl, username, content, avatarUrl);
+        std::cerr << "No valid operation specified. Use --help for usage information." << std::endl;
     }
 
     return 0;
