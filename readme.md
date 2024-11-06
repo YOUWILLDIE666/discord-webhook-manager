@@ -12,10 +12,14 @@ cmake --build .
 
 ```bat
 @REM Arguments that can be passed:
-DiscordWebhook.exe --delete <webhookl_url>
-DiscordWebhook.exe --json input.json
-DiscordWebhook.exe --username "YourUsername" --content "Your message here" --avatarUrl "https://example.com/avatar.png"
-DiscordWebhook.exe --dump <webhookl_url>
+DiscordWebhook.exe  --delete <url>                @REM Delete the specified webhook.
+DiscordWebhook.exe  --json <file>                 @REM Load webhook parameters from a JSON file.
+DiscordWebhook.exe  --username <name>             @REM Specify the username.
+DiscordWebhook.exe  --content <message>           @REM Specify the message content.
+DiscordWebhook.exe  --avatarUrl <url>             @REM Specify the avatar URL.
+DiscordWebhook.exe  --webhookUrl <url>            @REM Specify the webhook URL.
+DiscordWebhook.exe  --dump <url>                  @REM Dump information about the specified webhook.
+DiscordWebhook.exe  --help                        @REM Display this help message.
 ```
 
 <div align="center">
