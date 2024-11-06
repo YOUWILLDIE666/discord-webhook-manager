@@ -17,7 +17,7 @@ const std::string RED = "\x1B[31m";
 static void hell()
 {
     std::cout << "Usage:\n"
-              << "  webhook_sender [options]\n\n"
+              << "  discord-webhook.exe [options]\n\n"
               << "Options:\n"
               << "  --delete <url>                Delete the specified webhook.\n"
               << "  --json <file>                 Load webhook parameters from a JSON file.\n"
@@ -42,7 +42,7 @@ static void dumpWebhook(const std::string& webhookUrl)
 
         request.perform();
 
-        nlohmann::json_abi_v3_11_3::json jsonResponse = nlohmann::json::parse(response.str(), nullptr, false);
+        auto jsonResponse = nlohmann::json::parse(response.str(), nullptr, false);
         if (jsonResponse.is_discarded())
         {
             std::cerr << RED << "Error: Failed to parse JSON response." << RESET << std::endl;
