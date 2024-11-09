@@ -1,4 +1,5 @@
 <div align="center">
+    <h1>Discord Webhook Manager (CLI)</h1>
     <h2>Building</h2>
 </div>
 
@@ -11,8 +12,11 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake
 cmake --build .
 ```
 
+<div align="center">
+    <h2>Help</h2>
+</div>
+
 ```bat
-@REM Arguments that can be passed:
 discord-webhook.exe  --delete <url>                @REM Delete the specified webhook.
 discord-webhook.exe  --json <file>                 @REM Load webhook parameters from a JSON file.
 discord-webhook.exe  --username <name>             @REM Specify the username.
@@ -24,7 +28,7 @@ discord-webhook.exe  --help                        @REM Display this help messag
 ```
 
 <div align="center">
-    <h2>Example JSON</h2>
+    <h2>JSON Example</h2>
 </div>
 
 ```json
