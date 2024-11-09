@@ -30,7 +30,7 @@ discord-webhook.exe  --help                        @REM Display this help messag
 ```json
 {
     "webhookUrl": "https://discord.com/api/webhooks/1234567890/abcdefg",
-    "username": "Your Username",
+    "username": "Your username",
     "content": "Your message here",
     "avatarUrl": "https://example.com/avatar.png"
 }

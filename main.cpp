@@ -80,7 +80,7 @@ static void dumpWebhook(const std::string& webhookUrl)
     }
 }
 
-static void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content, const std::string& avatarUrl)
+const static void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content, const std::string& avatarUrl)
 {
     nlohmann::json jsonPayload;
     jsonPayload["username"] = username;
@@ -116,7 +116,7 @@ static void sendWebhook(const std::string& webhookUrl, const std::string& userna
     }
 }
 
-static void deleteWebhook(const std::string& webhookUrl)
+const static void deleteWebhook(const std::string& webhookUrl)
 {
     try
     {
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
     GetConsoleMode(hConsole, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole, dwMode);
-#endif
+#endif // defined(_WIN32)
     cURLpp::Cleanup();
 
     std::string webhookUrl;
