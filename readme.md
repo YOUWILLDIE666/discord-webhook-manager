@@ -3,6 +3,7 @@
 </div>
 
 ```bat
+@REM Also make sure to set the VCPKG_ROOT as a system variable
 vcpkg install curlpp nlohmann-json
 git clone https://github.com/YOUWILLDIE666/discord-webhook.git && cd discord-webhook
 mkdir build && cd build
@@ -29,7 +30,7 @@ discord-webhook.exe  --help                        @REM Display this help messag
 ```json
 {
     "webhookUrl": "https://discord.com/api/webhooks/1234567890/abcdefg",
-    "username": "YourUsername",
+    "username": "Your Username",
     "content": "Your message here",
     "avatarUrl": "https://example.com/avatar.png"
 }

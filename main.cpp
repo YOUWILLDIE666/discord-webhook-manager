@@ -100,7 +100,7 @@ static void sendWebhook(const std::string& webhookUrl, const std::string& userna
         request.setOpt(new cURLpp::options::CustomRequest("POST"));
         request.setOpt(new cURLpp::options::HttpHeader({"Content-Type: application/json"}));
         request.setOpt(new cURLpp::options::PostFields(payloadString));
-        request.setOpt(new cURLpp::options::PostFieldSize(payloadString.size()));
+        request.setOpt(new cURLpp::options::PostFieldSize(static_cast<long>(payloadString.size())));
         request.setOpt(new cURLpp::options::Verbose(false));
 
         request.perform();
