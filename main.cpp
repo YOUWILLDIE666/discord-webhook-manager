@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include <cURLpp/cURLpp.hpp>
-#include <curlpp/Easy.hpp>
+#include <cURLpp/Easy.hpp>
 #include <cURLpp/Options.hpp>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
@@ -289,18 +289,42 @@ int main(int argc, char* argv[])
         }
         else if (std::string(argv[i]) == "--json")
         {
-            loadJSON(argv[++i], webhookUrl, username, content, avatarUrl, embedTitle, embedDescription,
-            embedColor, embedFooter, embedFooterIcon, filePath, dumpWebhookFlag, deleteWebhookFlag, sendWebhookFlag);
+            if (i + 1 < argc)
+            {
+                loadJSON(argv[++i], webhookUrl, username, content, avatarUrl, embedTitle, embedDescription,
+                embedColor, embedFooter, embedFooterIcon, filePath, dumpWebhookFlag, deleteWebhookFlag, sendWebhookFlag);
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
+                return 1;
+            }
         }
         else if (std::string(argv[i]) == "--dump")
         {
-            dumpWebhookFlag = true;
-            webhookUrl = argv[++i];
+            if (i + 1 < argc)
+            {
+                dumpWebhookFlag = true;
+                webhookUrl = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
+                return 1;
+            }
         }
         else if (std::string(argv[i]) == "--delete")
         {
-            deleteWebhookFlag = true;
-            webhookUrl = argv[++i];
+            if (i + 1 < argc)
+            {
+                deleteWebhookFlag = true;
+                webhookUrl = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
+                return 1;
+            }
         }
         else if (std::string(argv[i]) == "--send")
         {

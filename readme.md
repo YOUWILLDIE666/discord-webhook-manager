@@ -20,12 +20,12 @@ cmake --build .
 @REM General options:
 discord-webhook.exe  --delete <url>                @REM Delete the specified webhook.
 discord-webhook.exe  --dump <url>                  @REM Dump information about the specified webhook.
-discord-webhook.exe  --send <url>                  @REM Send a POST request to the specified webhook with the specified parameters.
+discord-webhook.exe  --send <url>                  @REM Send a message (POST) to the specified webhook with the specified parameters.
 discord-webhook.exe  --json <file>                 @REM Load webhook parameters from a JSON file.
 discord-webhook.exe  --username <name>             @REM Specify the username.
 discord-webhook.exe  --content <text>              @REM Specify the message content.
 discord-webhook.exe  --avatar-url <url>            @REM Specify the avatar URL.
-discord-webhook.exe  --file <path>                 @REM Specify the path to the file to attach.
+discord-webhook.exe  --file <path>                 @REM Specify the path to the file to attach (must be less than 8MB).
 
 @REM Embed options:
 discord-webhook.exe  --title <title>               @REM Specify the embed title.
@@ -44,7 +44,7 @@ discord-webhook.exe  --help                        @REM Display this help messag
 ```json
 {
     "webhook-url": "https://discord.com/api/webhooks/123/abc",
-    "username": "Username (any)",
+    "username": "Username",
     "content": "Message example",
     "avatar-url": "https://example.com/avatar_icon.png",
     "embed-title": "Embed Title",
