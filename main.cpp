@@ -1,10 +1,13 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <fstream>
 #include <cURLpp/cURLpp.hpp>
-#include <cURLpp/Easy.hpp>
+#include <curlpp/Easy.hpp>
 #include <cURLpp/Options.hpp>
+#include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include <boost/filesystem.hpp>
 
 const std::string RESET = "\x1B[0m";
 const std::string BOLD = "\x1B[1m";
@@ -14,19 +17,92 @@ const std::string YELLOW = "\x1B[33m";
 const std::string GREEN = "\x1B[32m";
 const std::string RED = "\x1B[31m";
 
+int toDecimal(const std::string& hexColor) {
+    return std::stoi(hexColor.substr(1), nullptr, 16);
+}
+
+bool fileGE(const std::string& filePath) {
+    boost::filesystem::path path(filePath);
+
+    if (!boost::filesystem::exists(path)) {
+        std::cerr << RED << "FATAL: file does not exist." << RESET << std::endl;
+        return false;
+    }
+
+    if (!boost::filesystem::is_regular_file(path)) {
+        std::cerr << RED << "FATAL: path is not a regular file." << RESET << std::endl;
+        return false;
+    }
+
+    std::uintmax_t fileSize = boost::filesystem::file_size(path);
+
+    constexpr std::uintmax_t eightMB = 8 * 1024 * 1024; // 8 MB
+    return fileSize >= eightMB;
+}
+
 static void hell()
 {
     std::cout << "Usage:\n"
               << "  discord-webhook.exe [options]\n\n"
               << "Options:\n"
               << "  --delete <url>                Delete the specified webhook.\n"
-              << "  --json <file>                 Load webhook parameters from a JSON file.\n"
-              << "  --username <name>             Specify the username.\n"
-              << "  --content <message>           Specify the message content.\n"
-              << "  --avatarUrl <url>             Specify the avatar URL.\n"
-              << "  --webhookUrl <url>            Specify the webhook URL.\n"
               << "  --dump <url>                  Dump information about the specified webhook.\n"
+              << "  --send <url>                  Send a message (POST) to the specified webhook with the specified parameters.\n"
+              << "  --json <file>                 Load options from the specified JSON file.\n"
+              << "  --username <name>             Specify the username.\n"
+              << "  --content <text>              Specify the message content.\n"
+              << "  --avatar-url <url>            Specify the avatar URL.\n"
+              << "  --file <path>                 Specify the path to the file to attach.\n\n"
+              << "Embed Options:\n"
+              << "  --title <title>               Specify the embed title.\n"
+              << "  --description <text>          Specify the embed description.\n"
+              << "  --color <color>               Specify the embed color.\n"
+              << "  --footer <footer>             Specify the embed footer text.\n"
+              << "  --footer-icon <url>           Specify the embed footer icon URL.\n\n"
               << "  --help                        Display this help message.\n";
+}
+
+static void loadJSON(const std::string& filePath, std::string& webhookUrl, std::string& username,
+                     std::string& content, std::string& avatarUrl, std::string& embedTitle,
+                     std::string& embedDescription, std::string& embedColor, std::string& embedFooter,
+                     std::string& embedFooterIcon, std::string& file,
+                     bool& dumpWebhookFlag, bool& deleteWebhookFlag,
+                     bool& sendWebhookFlag)
+{
+    std::ifstream jsonFile(filePath);
+    if (!jsonFile.is_open())
+    {
+        std::cerr << RED << "Error: Could not open JSON file: " << filePath << RESET << std::endl;
+        return;
+    }
+
+    nlohmann::json jsonData;
+    jsonFile >> jsonData;
+
+    if (jsonData.contains("webhook-url")) webhookUrl = jsonData["webhook-url"].get<std::string>();
+    if (jsonData.contains("username")) username = jsonData["username"].get<std::string>();
+    if (jsonData.contains("content")) content = jsonData["content"].get<std::string>();
+    if (jsonData.contains("avatar-url")) avatarUrl = jsonData["avatar-url"].get<std::string>();
+    if (jsonData.contains("embed-title")) embedTitle = jsonData["embed-title"].get<std::string>();
+    if (jsonData.contains("embed-description")) embedDescription = jsonData["embed-description"].get<std::string>();
+    if (jsonData.contains("embed-color"))
+    {
+        std::string hexColor = jsonData["embed-color"].get<std::string>();
+        if (hexColor[0] == '#')
+        {
+            embedColor = std::to_string(toDecimal(hexColor));
+        }
+        else
+        {
+            embedColor = hexColor;
+        }
+    }
+    if (jsonData.contains("embed-footer")) embedFooter = jsonData["embed-footer"].get<std::string>();
+    if (jsonData.contains("embed-footer-icon")) embedFooterIcon = jsonData["embed-footer-icon"].get<std::string>();
+    if (jsonData.contains("file")) file = jsonData["file"].get<std::string>();
+    if (jsonData.contains("dump")) dumpWebhookFlag = jsonData["dump"].get<bool>();
+    if (jsonData.contains("delete")) deleteWebhookFlag = jsonData["delete"].get<bool>();
+    if (jsonData.contains("send")) sendWebhookFlag = jsonData["send"].get<bool>();
 }
 
 static void dumpWebhook(const std::string& webhookUrl)
@@ -42,7 +118,7 @@ static void dumpWebhook(const std::string& webhookUrl)
 
         request.perform();
 
-        auto jsonResponse = nlohmann::json::parse(response.str(), nullptr, false);
+        nlohmann::json jsonResponse = nlohmann::json::parse(response.str(), nullptr, false);
         if (jsonResponse.is_discarded())
         {
             std::cerr << RED << "Error: Failed to parse JSON response." << RESET << std::endl;
@@ -67,7 +143,7 @@ static void dumpWebhook(const std::string& webhookUrl)
         }
         else
         {
-            std::cout << RED << "Error: Webhook not found." << RESET << std::endl;
+            std::cout << RED << "Error: webhook doesn't exist (Probably deleted)." << RESET << std::endl;
         }
     }
     catch (const cURLpp::RuntimeError& e)
@@ -76,44 +152,83 @@ static void dumpWebhook(const std::string& webhookUrl)
     }
     catch (const std::exception& e)
     {
-        std::cerr << RED << e.what () << RESET << std::endl;
+        std::cerr << RED << e.what() << RESET << std::endl;
     }
 }
 
-const static void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content, const std::string& avatarUrl)
+const static void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content,
+                              const std::string& avatarUrl, const std::string& embedTitle, const std::string& embedDescription,
+                              const std::string& embedColor, const std::string& embedFooter, const std::string& embedFooterIcon,
+                              const std::string& filePath)
 {
+    if (fileGE(filePath))
+    {
+        std::cerr << RED << "ERROR: file is >=8MB." << RESET << std::endl;
+    }
     nlohmann::json jsonPayload;
     jsonPayload["username"] = username;
     jsonPayload["content"] = content;
-    jsonPayload["webhookUrl"] = webhookUrl;
     if (!avatarUrl.empty())
     {
         jsonPayload["avatar_url"] = avatarUrl;
     }
 
-    std::string payloadString = jsonPayload.dump();
+    if (!(embedTitle.empty() || embedDescription.empty() || embedColor.empty() || embedFooter.empty() || embedFooterIcon.empty()))
+    {
+        nlohmann::json embed;
+        if (!embedTitle.empty()) embed["title"] = embedTitle;
+        if (!embedDescription.empty()) embed["description"] = embedDescription;
+        if (!embedColor.empty()) embed["color"] = embedColor;
+        if (!embedFooter.empty()) embed["footer"]["text"] = embedFooter;
+        if (!embedFooterIcon.empty()) embed["footer"]["icon_url"] = embedFooterIcon;
 
-    try
-    {
-        cURLpp::Easy request;
-        request.setOpt(new cURLpp::options::Url(webhookUrl));
-        request.setOpt(new cURLpp::options::CustomRequest("POST"));
-        request.setOpt(new cURLpp::options::HttpHeader({"Content-Type: application/json"}));
-        request.setOpt(new cURLpp::options::PostFields(payloadString));
-        request.setOpt(new cURLpp::options::PostFieldSize(static_cast<long>(payloadString.size())));
-        request.setOpt(new cURLpp::options::Verbose(false));
+        jsonPayload["embeds"] = { embed };
+    }
 
-        request.perform();
-        std::cout << GREEN << "Success!" << RESET << std::endl;
-    }
-    catch (const cURLpp::RuntimeError& e)
+    // use cURL since I almost killed myself while trying to implement the same thing with cURLpp (using formport)
+
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+
+    if (curl)
     {
-        std::cerr << RED << e.what() << RESET << std::endl;
+        curl_easy_setopt(curl, CURLOPT_URL, webhookUrl.c_str());
+
+        curl_mime *form = curl_mime_init(curl);
+
+        curl_mimepart *part = curl_mime_addpart(form);
+        curl_mime_name(part, "payload_json");
+        std::string jsonString = jsonPayload.dump();
+        curl_mime_data(part, jsonString.c_str(), CURL_ZERO_TERMINATED);
+
+        if (!filePath.empty())
+        {
+            part = curl_mime_addpart(form);
+            curl_mime_name(part, "file");
+            curl_mime_filedata(part, filePath.c_str());
+        }
+
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+
+        res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK)
+        {
+            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+        }
+        else
+        {
+            std::cout << GREEN << "Success!" << RESET << std::endl;
+        }
+
+        curl_mime_free(form);
+        curl_easy_cleanup(curl);
     }
-    catch (const std::exception& e)
-    {
-        std::cerr << RED << e.what() << RESET << std::endl;
-    }
+
+    curl_global_cleanup();
 }
 
 const static void deleteWebhook(const std::string& webhookUrl)
@@ -154,8 +269,16 @@ int main(int argc, char* argv[])
     std::string username = "Webhook";
     std::string content;
     std::string avatarUrl;
+    std::string filePath;
+    std::string embedTitle;
+    std::string embedDescription;
+    std::string embedColor;
+    std::string embedFooter;
+    std::string embedFooterIcon;
+
     bool dumpWebhookFlag = false;
     bool deleteWebhookFlag = false;
+    bool sendWebhookFlag = false;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -164,31 +287,146 @@ int main(int argc, char* argv[])
             hell();
             return 0;
         }
-        else if (std::string(argv[i]) == "--dump" && (i + 1) < argc)
+        else if (std::string(argv[i]) == "--json")
+        {
+            loadJSON(argv[++i], webhookUrl, username, content, avatarUrl, embedTitle, embedDescription,
+            embedColor, embedFooter, embedFooterIcon, filePath, dumpWebhookFlag, deleteWebhookFlag, sendWebhookFlag);
+        }
+        else if (std::string(argv[i]) == "--dump")
         {
             dumpWebhookFlag = true;
             webhookUrl = argv[++i];
         }
-        else if (std::string(argv[i]) == "--delete" && (i + 1) < argc)
+        else if (std::string(argv[i]) == "--delete")
         {
             deleteWebhookFlag = true;
             webhookUrl = argv[++i];
         }
-        else if (std::string(argv[i]) == "--webhookUrl" && (i + 1) < argc)
+        else if (std::string(argv[i]) == "--send")
         {
-            webhookUrl = argv[++i];
+            if (i + 1 < argc)
+            {
+                sendWebhookFlag = true;
+                webhookUrl = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
+                return 1;
+            }
         }
-        else if (std::string(argv[i]) == "--username" && (i + 1) < argc)
+        else if (std::string(argv[i]) == "--username")
         {
-            username = argv[++i];
+            if (i + 1 < argc)
+            {
+                username = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --username requires an argument." << RESET << std::endl;
+                return 1;
+            }
         }
-        else if (std::string(argv[i]) == "--content" && (i + 1) < argc)
+        else if (std::string(argv[i]) == "--content")
         {
-            content = argv[++i];
+            if (i + 1 < argc)
+            {
+                content = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --content requires an argument." << RESET << std::endl;
+                return 1;
+            }
         }
-        else if (std::string(argv[i]) == "--avatarUrl" && (i + 1) < argc)
+        else if (std::string(argv[i]) == "--avatar-url")
         {
-            avatarUrl = argv[++i];
+            if (i + 1 < argc)
+            {
+                avatarUrl = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --avatar-url requires an argument." << RESET << std::endl;
+                return 1;
+            }
+        }
+        else if (std::string(argv[i]) == "--file")
+        {
+            if (i + 1 < argc)
+            {
+                filePath = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --file requires an argument." << RESET << std::endl;
+                return 1;
+            }
+        }
+        else if (std::string(argv[i]) == "--title")
+        {
+            if (i + 1 < argc)
+            {
+                embedTitle = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --title requires an argument." << RESET << std::endl;
+                return 1;
+            }
+        }
+        else if (std::string(argv[i]) == "--description")
+        {
+            if (i + 1 < argc)
+            {
+                embedDescription = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --description requires an argument." << RESET << std::endl;
+                return 1;
+            }
+        }
+        else if (std::string(argv[i]) == "--color")
+        {
+            if (i + 1 < argc)
+            {
+                embedColor = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --color requires an argument." << RESET << std::endl;
+                return 1;
+            }
+        }
+        else if (std::string(argv[i]) == "--footer")
+        {
+            if (i + 1 < argc)
+            {
+                embedFooter = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --footer requires an argument." << RESET << std::endl;
+                return 1;
+            }
+        }
+        else if (std::string(argv[i]) == "--footer-icon")
+        {
+            if (i + 1 < argc)
+            {
+                embedFooterIcon = argv[++i];
+            }
+            else
+            {
+                std::cerr << RED << "FATAL: --footer-icon requires an argument." << RESET << std::endl;
+                return 1;
+            }
+        }
+        else
+        {
+            std::cerr << RED << "FATAL: unknown argument '" << argv[i] << "'" << RESET << std::endl;
+            return 1;
         }
     }
 
@@ -200,9 +438,9 @@ int main(int argc, char* argv[])
     {
         dumpWebhook(webhookUrl);
     }
-    else if (!content.empty())
+    else if (sendWebhookFlag)
     {
-        sendWebhook(webhookUrl, username, content, avatarUrl);
+        sendWebhook(webhookUrl, username, content, avatarUrl, embedTitle, embedDescription, embedColor, embedFooter, embedFooterIcon, filePath);
     }
     else
     {
