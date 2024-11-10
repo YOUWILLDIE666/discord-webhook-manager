@@ -52,7 +52,7 @@ static void hell()
               << "  --username <name>             Specify the username.\n"
               << "  --content <text>              Specify the message content.\n"
               << "  --avatar-url <url>            Specify the avatar URL.\n"
-              << "  --file <path>                 Specify the path to the file to attach.\n\n"
+              << "  --file <path>                 Specify the path to the file to attach (must be less than 8MB).\n\n"
               << "Embed Options:\n"
               << "  --title <title>               Specify the embed title.\n"
               << "  --description <text>          Specify the embed description.\n"
@@ -296,7 +296,7 @@ int main(int argc, char* argv[])
             }
             else
             {
-                std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
+                std::cerr << RED << "FATAL: --json requires an argument." << RESET << std::endl;
                 return 1;
             }
         }
@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
             }
             else
             {
-                std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
+                std::cerr << RED << "FATAL: --dump requires an argument." << RESET << std::endl;
                 return 1;
             }
         }
@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
             }
             else
             {
-                std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
+                std::cerr << RED << "FATAL: --delete requires an argument." << RESET << std::endl;
                 return 1;
             }
         }
