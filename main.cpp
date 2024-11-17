@@ -17,19 +17,23 @@ const std::string YELLOW = "\x1B[33m";
 const std::string GREEN = "\x1B[32m";
 const std::string RED = "\x1B[31m";
 
-int toDecimal(const std::string& hexColor) {
+int toDecimal(const std::string& hexColor)
+{
     return std::stoi(hexColor.substr(1), nullptr, 16);
 }
 
-bool fileGE(const std::string& filePath) {
+bool fileGE(const std::string& filePath)
+{
     boost::filesystem::path path(filePath);
 
-    if (!boost::filesystem::exists(path)) {
+    if (!boost::filesystem::exists(path))
+    {
         std::cerr << RED << "FATAL: file does not exist." << RESET << std::endl;
         return false;
     }
 
-    if (!boost::filesystem::is_regular_file(path)) {
+    if (!boost::filesystem::is_regular_file(path))
+    {
         std::cerr << RED << "FATAL: path is not a regular file." << RESET << std::endl;
         return false;
     }
@@ -184,8 +188,6 @@ const static void sendWebhook(const std::string& webhookUrl, const std::string& 
 
         jsonPayload["embeds"] = { embed };
     }
-
-    // use cURL since I almost killed myself while trying to implement the same thing with cURLpp (using formport)
 
     CURL *curl;
     CURLcode res;
@@ -449,7 +451,7 @@ int main(int argc, char* argv[])
         }
         else
         {
-            std::cerr << RED << "FATAL: unknown argument '" << argv[i] << "'" << RESET << std::endl;
+            std::cerr << RED << "FATAL: unknown argument \"" << argv[i] << "\"" << RESET << std::endl;
             return 1;
         }
     }

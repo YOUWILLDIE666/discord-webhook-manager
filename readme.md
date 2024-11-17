@@ -1,6 +1,7 @@
 <div align="center">
     <h1>Discord Webhook Manager (CLI)</h1>
     <h2>Building</h2>
+    <p>Build type is <strong>Release</strong> by default, you can pass the <code>CMAKE_BUILD_TYPE</code> to specify it.</p>
 </div>
 
 ```bat
@@ -8,7 +9,7 @@
 vcpkg install curlpp nlohmann-json boost-filesystem boost-system
 git clone https://github.com/YOUWILLDIE666/discord-webhook.git && cd discord-webhook
 mkdir build && cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake
+cmake ..
 cmake --build .
 ```
 
@@ -41,7 +42,7 @@ discord-webhook.exe  --help                        @REM Display this help messag
     <h2>JSON Example</h2>
 </div>
 
-```json
+```json5
 {
     "webhook-url": "https://discord.com/api/webhooks/123/abc",
     "username": "Username",
