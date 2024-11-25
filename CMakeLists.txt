@@ -27,17 +27,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 function(set_compiler_flags target)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_compile_options(${target} PRIVATE 
-            "$<$<CONFIG:Release>:/O2>" 
-            "$<$<CONFIG:Debug>:/Od>" 
-            "$<$<CONFIG:RelWithDebInfo>:/O2 /Zi>" 
-            "$<$<CONFIG:MinSizeRel>:/O1>" 
-            "/MT"
+            "$<$<CONFIG:Release>:/O3>"
+            "$<$<CONFIG:Release>:/MT>"
+            "$<$<CONFIG:Debug>:/Od>"
+            "$<$<CONFIG:Debug>:/MTd>"
+            "$<$<CONFIG:RelWithDebInfo>:/O3>"
+            "$<$<CONFIG:RelWithDebInfo>:/Zi>"
+            "$<$<CONFIG:MinSizeRel>:/O1>"
         )
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${target} PRIVATE 
-            "$<$<CONFIG:Release>:-O2>" 
-            "$<$<CONFIG:Debug>:-O0>" 
-            "$<$<CONFIG:RelWithDebInfo>:-O2 -g>" 
+            "$<$<CONFIG:Release>:-O2>"
+            "$<$<CONFIG:Debug>:-O0>"
+            "$<$<CONFIG:RelWithDebInfo>:-O2 -g>"
             "$<$<CONFIG:MinSizeRel>:-Os>"
             "-static"
         )
