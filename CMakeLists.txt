@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
-project("discord-webhook" VERSION 1.0.8 LANGUAGES CXX)
+project("discord-webhook" VERSION 1.0.9 LANGUAGES CXX)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Default to Release build" FORCE)
