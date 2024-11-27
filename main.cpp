@@ -1,13 +1,19 @@
-#include <iostream>
-#include <sstream>
-#include <string>
 #include <fstream>
 #include <cURLpp/cURLpp.hpp>
 #include <cURLpp/Easy.hpp>
 #include <cURLpp/Options.hpp>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+
+#ifdef USEBOOST
+
 #include <boost/filesystem.hpp>
+
+#else
+
+#include <filesystem>
+
+#endif
 
 const std::string RESET = "\x1B[0m";
 const std::string BOLD = "\x1B[1m";
@@ -24,21 +30,56 @@ int toDecimal(const std::string& hexColor)
 
 bool fileGE(const std::string& filePath)
 {
+
+#ifdef USEBOOST
+
     boost::filesystem::path path(filePath);
 
+#else
+
+    std::filesystem::path path(filePath);
+
+#endif
+
+#ifdef USEBOOST
+
     if (!boost::filesystem::exists(path))
+
+#else
+
+    if (!std::filesystem::exists(path))
+
+#endif
+
     {
         std::cerr << RED << "FATAL: file does not exist." << RESET << std::endl;
         return false;
     }
 
+#ifdef USEBOOST
+
     if (!boost::filesystem::is_regular_file(path))
+
+#else
+
+    if (!std::filesystem::is_regular_file(path))
+
+#endif
+
     {
         std::cerr << RED << "FATAL: path is not a regular file." << RESET << std::endl;
         return false;
     }
 
+#ifdef USEBOOST
+
     std::uintmax_t fileSize = boost::filesystem::file_size(path);
+
+#else
+
+    std::uintmax_t fileSize = std::filesystem::file_size(path);
+
+#endif
 
     constexpr std::uintmax_t eightMB = 8 * 1024 * 1024; // 8 MB
     return fileSize >= eightMB;
@@ -255,7 +296,7 @@ const static void deleteWebhook(const std::string& webhookUrl)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
 #ifdef _WIN32
 #include <Windows.h>

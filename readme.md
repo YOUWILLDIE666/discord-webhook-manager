@@ -1,15 +1,15 @@
 <div align="center">
     <h1>Discord Webhook Manager (CLI)</h1>
     <h2>Building</h2>
-    <p>Build type is <strong>Release</strong> by default, you can pass the <code>CMAKE_BUILD_TYPE</code> to specify it.</p>
+    <p>Build type is <strong>Release</strong> by default, you can pass the <code>CMAKE_BUILD_TYPE</code> definition when building to specify it.</p>
+    <p>You also can pass the <code>USEBOOST</code> definition to use boost-filesystem instead of std::filesystem for whatever reason.</p>
 </div>
 
 ```bat
-@REM Also make sure to set the VCPKG_ROOT as a system variable
 vcpkg install curlpp nlohmann-json boost-filesystem boost-system
 git clone https://github.com/YOUWILLDIE666/discord-webhook.git && cd discord-webhook
 mkdir build && cd build
-cmake ..
+cmake -DUSEBOOST=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 cmake --build .
 ```
 
