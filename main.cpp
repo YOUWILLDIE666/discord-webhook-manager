@@ -1,4 +1,5 @@
 #include <fstream>
+#include <sstream>
 #include <cURLpp/cURLpp.hpp>
 #include <cURLpp/Easy.hpp>
 #include <cURLpp/Options.hpp>
