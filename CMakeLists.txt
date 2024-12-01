@@ -7,7 +7,11 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 # don't use Boost filesystem by default
-option(USEBOOST "Use Boost-filesystem library" OFF)
+option(USEBOOST "Use boost-filesystem library" OFF)
+
+# don't static-link by default
+# don't use this option by default YOU DUMBFUCKING IDIOT
+# option(STATICLNK "Statick linkage (no multi-threading)" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,20 +42,22 @@ function(set_compiler_flags target)
         target_compile_options(${target} PRIVATE 
             "$<$<CONFIG:Release>:/O3>"
             "$<$<CONFIG:Release>:/MT>"
+            # "$<$<CONFIG:Release>:/DEBUG:NO>"
             "$<$<CONFIG:Debug>:/Od>"
-            "$<$<CONFIG:Debug>:/MTd>"
+            "$<$<CONFIG:Debug>:/Zi>"
             "$<$<CONFIG:RelWithDebInfo>:/O2>"
             "$<$<CONFIG:RelWithDebInfo>:/Zi>"
-            "$<$<CONFIG:RelWithDebInfo>:/MT>"
             "$<$<CONFIG:MinSizeRel>:/O1>"
             "$<$<CONFIG:MinSizeRel>:/MT>"
+            # "$<$<CONFIG:MinSizeRel>:/DEBUG:NO>"
+            # i am going to eat my liver
         )
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${target} PRIVATE 
-            "$<$<CONFIG:Release>:-O3>"
-            "$<$<CONFIG:Debug>:-O0 -g4>"
-            "$<$<CONFIG:RelWithDebInfo>:-O2 -g>"
-            "$<$<CONFIG:MinSizeRel>:-Os>"
+            "$<$<CONFIG:Release>:-O3 -DNDEBUG>"
+            "$<$<CONFIG:Debug>:-O0 -g>"
+            "$<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>"
+            "$<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>"
             "-static"
         )
     else()
