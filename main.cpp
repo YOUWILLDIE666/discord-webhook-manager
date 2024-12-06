@@ -8,13 +8,13 @@
 
 #ifdef USEBOOST
 
-#include <boost/filesystem.hpp>
+# include <boost/filesystem.hpp>
 
-#else
+#else // ^^^ defined(USEBOOST) ^^^ VVV !defined(USEBOOST) VVV
 
-#include <filesystem>
+# include <filesystem>
 
-#endif
+#endif // ^^^ !defined(USEBOOST) ^^^
 
 const std::string RESET = "\x1B[0m";
 const std::string BOLD = "\x1B[1m";
@@ -36,21 +36,21 @@ bool fileGE(const std::string& filePath)
 
     boost::filesystem::path path(filePath);
 
-#else
+#else // ^^^ defined(USEBOOST) ^^^ VVV !defined(USEBOOST) VVV
 
     std::filesystem::path path(filePath);
 
-#endif
+#endif // ^^^ !defined(USEBOOST) ^^^
 
 #ifdef USEBOOST
 
     if (!boost::filesystem::exists(path))
 
-#else
+#else // ^^^ defined(USEBOOST) ^^^ VVV !defined(USEBOOST) VVV
 
     if (!std::filesystem::exists(path))
 
-#endif
+#endif // ^^^ !defined(USEBOOST) ^^^
 
     {
         std::cerr << RED << "FATAL: file does not exist." << RESET << std::endl;
@@ -61,11 +61,11 @@ bool fileGE(const std::string& filePath)
 
     if (!boost::filesystem::is_regular_file(path))
 
-#else
+#else // ^^^ defined(USEBOOST) ^^^ VVV !defined(USEBOOST) VVV
 
     if (!std::filesystem::is_regular_file(path))
 
-#endif
+#endif // ^^^ !defined(USEBOOST) ^^^
 
     {
         std::cerr << RED << "FATAL: path is not a regular file." << RESET << std::endl;
@@ -76,17 +76,17 @@ bool fileGE(const std::string& filePath)
 
     std::uintmax_t fileSize = boost::filesystem::file_size(path);
 
-#else
+#else // ^^^ defined(USEBOOST) ^^^ VVV !defined(USEBOOST) VVV
 
     std::uintmax_t fileSize = std::filesystem::file_size(path);
 
-#endif
+#endif // ^^^ !defined(USEBOOST) ^^^
 
     constexpr std::uintmax_t eightMB = 8 * 1024 * 1024; // 8 MB
     return fileSize >= eightMB;
 }
 
-static void hell()
+inline void hell()
 {
     std::cout << "Usage:\n"
               << "  discord-webhook.exe [options]\n\n"
@@ -108,7 +108,7 @@ static void hell()
               << "  --help                        Display this help message.\n";
 }
 
-static void loadJSON(const std::string& filePath, std::string& webhookUrl, std::string& username,
+inline void loadJSON(const std::string& filePath, std::string& webhookUrl, std::string& username,
                      std::string& content, std::string& avatarUrl, std::string& embedTitle,
                      std::string& embedDescription, std::string& embedColor, std::string& embedFooter,
                      std::string& embedFooterIcon, std::string& file,
@@ -125,33 +125,27 @@ static void loadJSON(const std::string& filePath, std::string& webhookUrl, std::
     nlohmann::json jsonData;
     jsonFile >> jsonData;
 
-    if (jsonData.contains("webhook-url")) webhookUrl = jsonData["webhook-url"].get<std::string>();
-    if (jsonData.contains("username")) username = jsonData["username"].get<std::string>();
-    if (jsonData.contains("content")) content = jsonData["content"].get<std::string>();
-    if (jsonData.contains("avatar-url")) avatarUrl = jsonData["avatar-url"].get<std::string>();
-    if (jsonData.contains("embed-title")) embedTitle = jsonData["embed-title"].get<std::string>();
-    if (jsonData.contains("embed-description")) embedDescription = jsonData["embed-description"].get<std::string>();
-    if (jsonData.contains("embed-color"))
+    webhookUrl = jsonData.value("webhook-url", webhookUrl);
+    username = jsonData.value("username", username);
+    content = jsonData.value("content", content);
+    avatarUrl = jsonData.value("avatar-url", avatarUrl);
+    embedTitle = jsonData.value("embed-title", embedTitle);
+    embedDescription = jsonData.value("embed-description", embedDescription);
+    embedColor = jsonData.value("embed-color", embedColor);
+    embedFooter = jsonData.value("embed-footer", embedFooter);
+    embedFooterIcon = jsonData.value("embed-footer-icon", embedFooterIcon);
+    file = jsonData.value("file", file);
+    dumpWebhookFlag = jsonData.value("dump", dumpWebhookFlag);
+    deleteWebhookFlag = jsonData.value("delete", deleteWebhookFlag);
+    sendWebhookFlag = jsonData.value("send", sendWebhookFlag);
+
+    if (!embedColor.empty() && embedColor[0] == '#')
     {
-        std::string hexColor = jsonData["embed-color"].get<std::string>();
-        if (hexColor[0] == '#')
-        {
-            embedColor = std::to_string(toDecimal(hexColor));
-        }
-        else
-        {
-            embedColor = hexColor;
-        }
+        embedColor = std::to_string(toDecimal(embedColor));
     }
-    if (jsonData.contains("embed-footer")) embedFooter = jsonData["embed-footer"].get<std::string>();
-    if (jsonData.contains("embed-footer-icon")) embedFooterIcon = jsonData["embed-footer-icon"].get<std::string>();
-    if (jsonData.contains("file")) file = jsonData["file"].get<std::string>();
-    if (jsonData.contains("dump")) dumpWebhookFlag = jsonData["dump"].get<bool>();
-    if (jsonData.contains("delete")) deleteWebhookFlag = jsonData["delete"].get<bool>();
-    if (jsonData.contains("send")) sendWebhookFlag = jsonData["send"].get<bool>();
 }
 
-static void dumpWebhook(const std::string& webhookUrl)
+inline void dumpWebhook(const std::string& webhookUrl)
 {
     try
     {
@@ -202,7 +196,7 @@ static void dumpWebhook(const std::string& webhookUrl)
     }
 }
 
-const static void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content,
+const inline void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content,
                               const std::string& avatarUrl, const std::string& embedTitle, const std::string& embedDescription,
                               const std::string& embedColor, const std::string& embedFooter, const std::string& embedFooterIcon,
                               const std::string& filePath)
@@ -219,7 +213,7 @@ const static void sendWebhook(const std::string& webhookUrl, const std::string& 
         jsonPayload["avatar_url"] = avatarUrl;
     }
 
-    if (!(embedTitle.empty() || embedDescription.empty() || embedColor.empty() || embedFooter.empty() || embedFooterIcon.empty()))
+    if (!embedTitle.empty() || !embedDescription.empty() || !embedColor.empty() || !embedFooter.empty() || !embedFooterIcon.empty())
     {
         nlohmann::json embed;
         if (!embedTitle.empty()) embed["title"] = embedTitle;
@@ -231,18 +225,12 @@ const static void sendWebhook(const std::string& webhookUrl, const std::string& 
         jsonPayload["embeds"] = { embed };
     }
 
-    CURL *curl;
-    CURLcode res;
-
-    curl_global_init(CURL_GLOBAL_ALL);
-    curl = curl_easy_init();
-
+    CURL *curl = curl_easy_init();
     if (curl)
     {
         curl_easy_setopt(curl, CURLOPT_URL, webhookUrl.c_str());
 
         curl_mime *form = curl_mime_init(curl);
-
         curl_mimepart *part = curl_mime_addpart(form);
         curl_mime_name(part, "payload_json");
         std::string jsonString = jsonPayload.dump();
@@ -256,8 +244,7 @@ const static void sendWebhook(const std::string& webhookUrl, const std::string& 
         }
 
         curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
-
-        res = curl_easy_perform(curl);
+        CURLcode res = curl_easy_perform(curl);
 
         if (res != CURLE_OK)
         {
@@ -275,7 +262,7 @@ const static void sendWebhook(const std::string& webhookUrl, const std::string& 
     curl_global_cleanup();
 }
 
-const static void deleteWebhook(const std::string& webhookUrl)
+const inline void deleteWebhook(const std::string& webhookUrl)
 {
     try
     {
@@ -300,12 +287,14 @@ const static void deleteWebhook(const std::string& webhookUrl)
 int main(int argc, const char* argv[])
 {
 #ifdef _WIN32
-#include <Windows.h>
+
+#   include <Windows.h>
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
     GetConsoleMode(hConsole, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole, dwMode);
+
 #endif // defined(_WIN32)
     cURLpp::Cleanup();
 
@@ -324,27 +313,22 @@ int main(int argc, const char* argv[])
     bool deleteWebhookFlag = false;
     bool sendWebhookFlag = false;
 
-    for (int i = 1; i < argc; ++i)
-    {
-        if (std::string(argv[i]) == "--help")
-        {
-            hell();
-            return 0;
-        }
-        else if (std::string(argv[i]) == "--json")
+    std::unordered_map<std::string, std::function<void(int)>> argmap = {
+        {"--help", [](int) { hell(); }},
+        {"--json", [&](int i)
         {
             if (i + 1 < argc)
             {
                 loadJSON(argv[++i], webhookUrl, username, content, avatarUrl, embedTitle, embedDescription,
-                embedColor, embedFooter, embedFooterIcon, filePath, dumpWebhookFlag, deleteWebhookFlag, sendWebhookFlag);
+                         embedColor, embedFooter, embedFooterIcon, filePath, dumpWebhookFlag, deleteWebhookFlag, sendWebhookFlag);
             }
             else
             {
                 std::cerr << RED << "FATAL: --json requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--dump")
+        }},
+        {"--dump", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -354,10 +338,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --dump requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--delete")
+        }},
+        {"--delete", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -367,10 +351,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --delete requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--send")
+        }},
+        {"--send", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -380,10 +364,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --send requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--username")
+        }},
+        {"--username", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -392,22 +376,21 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --username requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--content")
+        }},
+        {"--content", [&](int i)
         {
             if (i + 1 < argc)
             {
                 content = argv[++i];
-            }
-            else
+            } else
             {
                 std::cerr << RED << "FATAL: --content requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--avatar-url")
+        }},
+        {"--avatar-url", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -416,10 +399,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --avatar-url requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--file")
+        }},
+        {"--file", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -428,10 +411,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --file requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--title")
+        }},
+        {"--title", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -440,10 +423,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --title requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--description")
+        }},
+        {"--description", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -452,10 +435,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --description requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--color")
+        }},
+        {"--color", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -464,10 +447,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --color requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--footer")
+        }},
+        {"--footer", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -476,10 +459,10 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --footer requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
-        }
-        else if (std::string(argv[i]) == "--footer-icon")
+        }},
+        {"--footer-icon", [&](int i)
         {
             if (i + 1 < argc)
             {
@@ -488,13 +471,22 @@ int main(int argc, const char* argv[])
             else
             {
                 std::cerr << RED << "FATAL: --footer-icon requires an argument." << RESET << std::endl;
-                return 1;
+                exit(1);
             }
+        }},
+    };
+
+    for (int i = 1; i < argc; ++i)
+    {
+        std::string arg = argv[i];
+        if (argmap.find(arg) != argmap.end())
+        {
+            argmap[arg](i);
         }
         else
         {
-            std::cerr << RED << "FATAL: unknown argument \"" << argv[i] << "\"" << RESET << std::endl;
-            return 1;
+            std::cerr << RED << "FATAL: unknown argument \"" << arg << "\"" << RESET << std::endl;
+            exit(1);
         }
     }
 
