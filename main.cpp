@@ -24,12 +24,12 @@ const std::string YELLOW = "\x1B[33m";
 const std::string GREEN = "\x1B[32m";
 const std::string RED = "\x1B[31m";
 
-int toDecimal(const std::string& hexColor)
+int toDecimal(std::string_view hexColor)
 {
-    return std::stoi(hexColor.substr(1), nullptr, 16);
+    return std::stoi(static_cast<std::string>(hexColor).substr(1), nullptr, 16);
 }
 
-bool fileGE(const std::string& filePath)
+bool fileGE(std::string_view filePath)
 {
 
 #ifdef USEBOOST
@@ -108,14 +108,14 @@ inline void hell()
               << "  --help                        Display this help message.\n";
 }
 
-inline void loadJSON(const std::string& filePath, std::string& webhookUrl, std::string& username,
+inline void loadJSON(std::string_view filePath, std::string& webhookUrl, std::string& username,
                      std::string& content, std::string& avatarUrl, std::string& embedTitle,
                      std::string& embedDescription, std::string& embedColor, std::string& embedFooter,
                      std::string& embedFooterIcon, std::string& file,
                      bool& dumpWebhookFlag, bool& deleteWebhookFlag,
                      bool& sendWebhookFlag)
 {
-    std::ifstream jsonFile(filePath);
+    std::ifstream jsonFile(static_cast<std::string>(filePath));
     if (!jsonFile.is_open())
     {
         std::cerr << RED << "Error: Could not open JSON file: " << filePath << RESET << std::endl;
@@ -145,12 +145,12 @@ inline void loadJSON(const std::string& filePath, std::string& webhookUrl, std::
     }
 }
 
-inline void dumpWebhook(const std::string& webhookUrl)
+inline void dumpWebhook(std::string_view webhookUrl)
 {
     try
     {
         cURLpp::Easy request;
-        request.setOpt(new cURLpp::options::Url(webhookUrl));
+        request.setOpt(new cURLpp::options::Url(static_cast<std::string>(webhookUrl)));
         request.setOpt(new cURLpp::options::CustomRequest("GET"));
 
         std::ostringstream response;
@@ -196,10 +196,10 @@ inline void dumpWebhook(const std::string& webhookUrl)
     }
 }
 
-const inline void sendWebhook(const std::string& webhookUrl, const std::string& username, const std::string& content,
-                              const std::string& avatarUrl, const std::string& embedTitle, const std::string& embedDescription,
-                              const std::string& embedColor, const std::string& embedFooter, const std::string& embedFooterIcon,
-                              const std::string& filePath)
+const inline void sendWebhook(std::string_view webhookUrl, std::string_view username, std::string_view content,
+                              std::string_view avatarUrl, std::string_view embedTitle, std::string_view embedDescription,
+                              std::string_view embedColor, std::string_view embedFooter, std::string_view embedFooterIcon,
+                              std::string_view filePath)
 {
     if (fileGE(filePath))
     {
@@ -228,7 +228,7 @@ const inline void sendWebhook(const std::string& webhookUrl, const std::string& 
     CURL *curl = curl_easy_init();
     if (curl)
     {
-        curl_easy_setopt(curl, CURLOPT_URL, webhookUrl.c_str());
+        curl_easy_setopt(curl, CURLOPT_URL, static_cast<std::string>(webhookUrl).c_str());
 
         curl_mime *form = curl_mime_init(curl);
         curl_mimepart *part = curl_mime_addpart(form);
@@ -240,7 +240,7 @@ const inline void sendWebhook(const std::string& webhookUrl, const std::string& 
         {
             part = curl_mime_addpart(form);
             curl_mime_name(part, "file");
-            curl_mime_filedata(part, filePath.c_str());
+            curl_mime_filedata(part, static_cast<std::string>(filePath).c_str());
         }
 
         curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
@@ -262,12 +262,12 @@ const inline void sendWebhook(const std::string& webhookUrl, const std::string& 
     curl_global_cleanup();
 }
 
-const inline void deleteWebhook(const std::string& webhookUrl)
+const inline void deleteWebhook(std::string_view webhookUrl)
 {
     try
     {
         cURLpp::Easy request;
-        request.setOpt(new cURLpp::options::Url(webhookUrl));
+        request.setOpt(new cURLpp::options::Url(static_cast<std::string>(webhookUrl)));
         request.setOpt(new cURLpp::options::CustomRequest("DELETE"));
         request.setOpt(new cURLpp::options::Verbose(false));
 

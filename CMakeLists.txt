@@ -54,7 +54,7 @@ function(set_compiler_flags target)
         )
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${target} PRIVATE 
-            "$<$<CONFIG:Release>:-O3 -DNDEBUG>"
+            "$<$<CONFIG:Release>:-O4 -DNDEBUG>"
             "$<$<CONFIG:Debug>:-O0 -g>"
             "$<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>"
             "$<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>"
